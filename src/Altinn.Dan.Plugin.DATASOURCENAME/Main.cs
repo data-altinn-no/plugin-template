@@ -1,4 +1,4 @@
-using Altinn.Dan.Plugin.Arbeidstilsynet.Config;
+using Altinn.Dan.Plugin.DATASOURCENAME.Config;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
@@ -16,7 +16,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Altinn.Dan.Plugin.Arbeidstilsynet
+namespace Altinn.Dan.Plugin.DATASOURCENAME
 {
     public class Main
     {

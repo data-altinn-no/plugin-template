@@ -7,11 +7,11 @@ using Polly.Caching.Distributed;
 using Polly.Extensions.Http;
 using Polly.Registry;
 using System;
-using Altinn.Dan.Plugin.Arbeidstilsynet.Config;
+using Altinn.Dan.Plugin.DATASOURCENAME.Config;
 
-[assembly: FunctionsStartup(typeof(Altinn.Dan.Plugin.Arbeidstilsynet.Startup))]
+[assembly: FunctionsStartup(typeof(Altinn.Dan.Plugin.DATASOURCENAME.Startup))]
 
-namespace Altinn.Dan.Plugin.Arbeidstilsynet
+namespace Altinn.Dan.Plugin.DATASOURCENAME
 {
 
     public class Startup: FunctionsStartup

@@ -1,6 +1,6 @@
 using System;
 
-namespace Altinn.Dan.Plugin.Arbeidstilsynet.Config
+namespace Altinn.Dan.Plugin.DATASOURCENAME.Config
 {
     public interface IApplicationSettings
     {

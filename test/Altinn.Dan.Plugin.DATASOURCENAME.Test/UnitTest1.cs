@@ -1,6 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Altinn.Dan.Plugin.Arbeidstilsynet.Test
+namespace Altinn.Dan.Plugin.DATASOURCENAME.Test
 {
     [TestClass]
     public class UnitTest1

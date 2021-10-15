@@ -1,9 +1,9 @@
-using Altinn.Dan.Plugin.Arbeidstilsynet.Config;
+using Altinn.Dan.Plugin.DATASOURCENAME.Config;
 using Nadobe.Common.Interfaces;
 using Nadobe.Common.Models;
 using System.Collections.Generic;
 
-namespace Altinn.Dan.Plugin.Arbeidstilsynet
+namespace Altinn.Dan.Plugin.DATASOURCENAME
 {
     public class Metadata
     {
