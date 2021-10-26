@@ -1,7 +1,8 @@
+using System.Collections.Generic;
 using Altinn.Dan.Plugin.DATASOURCENAME.Config;
 using Nadobe.Common.Interfaces;
 using Nadobe.Common.Models;
-using System.Collections.Generic;
+using Nadobe.Common.Models.Enums;
 
 namespace Altinn.Dan.Plugin.DATASOURCENAME
 {
@@ -16,50 +17,54 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
 
         public List<EvidenceCode> GetEvidenceCodes()
         {
-            var a = new List<EvidenceCode>() { new EvidenceCode()
+            var a = new List<EvidenceCode>()
             {
-                EvidenceCodeName = "DATASETNAME1",
-                EvidenceSource = EvidenceSourceMetadata.SOURCE,
-                ServiceContext = "servicecontext ie ebevis",
-                AccessMethod = Nadobe.Common.Models.Enums.EvidenceAccessMethod.Open,
-                Values = new List<EvidenceValue>()
+                new EvidenceCode()
                 {
-                    new EvidenceValue()
+                    EvidenceCodeName = "DATASETNAME1",
+                    EvidenceSource = EvidenceSourceMetadata.SOURCE,
+                    ServiceContext = "servicecontext ie ebevis",
+                    AccessMethod = EvidenceAccessMethod.Open,
+                    Values = new List<EvidenceValue>()
                     {
-                        EvidenceValueName = "felt1",
-                        ValueType = Nadobe.Common.Models.Enums.EvidenceValueType.String
-                    },
-                    new EvidenceValue()
+                        new EvidenceValue()
+                        {
+                            EvidenceValueName = "felt1",
+                            ValueType = EvidenceValueType.String
+                        },
+                        new EvidenceValue()
+                        {
+                            EvidenceValueName = "felt2",
+                            ValueType = EvidenceValueType.String
+                        }
+                    }
+                },
+                new EvidenceCode()
+                {
+                    EvidenceCodeName = "DATASETNAME2",
+                    EvidenceSource = EvidenceSourceMetadata.SOURCE,
+                    ServiceContext = "servicecontext ie ebevis",
+                    AccessMethod = EvidenceAccessMethod.Open,
+                    Values = new List<EvidenceValue>()
                     {
-                        EvidenceValueName = "felt2",
-                        ValueType = Nadobe.Common.Models.Enums.EvidenceValueType.String
+                        new EvidenceValue()
+                        {
+                            EvidenceValueName = "felt1",
+                            ValueType = EvidenceValueType.String
+                        },
+                        new EvidenceValue()
+                        {
+                            EvidenceValueName = "felt2",
+                            ValueType = EvidenceValueType.String
+                        },
+                        new EvidenceValue()
+                        {
+                            EvidenceValueName = "felt3",
+                            ValueType = EvidenceValueType.DateTime
+                        }
                     }
                 }
-            }, new EvidenceCode()
-            {
-                EvidenceCodeName = "DATASETNAME2",
-                EvidenceSource = EvidenceSourceMetadata.SOURCE,
-                ServiceContext = "servicecontext ie ebevis",
-                AccessMethod = Nadobe.Common.Models.Enums.EvidenceAccessMethod.Open,
-                Values = new List<EvidenceValue>()
-                {
-                    new EvidenceValue()
-                    {
-                        EvidenceValueName = "felt1",
-                        ValueType = Nadobe.Common.Models.Enums.EvidenceValueType.String
-                    },
-                    new EvidenceValue()
-                    {
-                        EvidenceValueName = "felt2",
-                        ValueType = Nadobe.Common.Models.Enums.EvidenceValueType.String
-                    },
-                    new EvidenceValue()
-                    {
-                        EvidenceValueName = "felt3",
-                        ValueType = Nadobe.Common.Models.Enums.EvidenceValueType.DateTime
-                    }
-                }
-            } };
+            };
 
             return a;
         }

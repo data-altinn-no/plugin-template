@@ -1,3 +1,8 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Altinn.Dan.Plugin.DATASOURCENAME.Config;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -9,12 +14,6 @@ using Nadobe.Common.Exceptions;
 using Nadobe.Common.Models;
 using Nadobe.Common.Util;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace Altinn.Dan.Plugin.DATASOURCENAME
 {
@@ -34,8 +33,8 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
 
         [FunctionName("DATASETNAME1")]
         public async Task<IActionResult> Bemanning(
-           [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-           ILogger log)
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            ILogger log)
         {
             _logger = log;
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
@@ -62,7 +61,6 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
             {
                 var request = new HttpRequestMessage(HttpMethod.Get, target);
                 result = await _client.SendAsync(request);
-
             }
             catch (HttpRequestException ex)
             {
@@ -77,15 +75,18 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
             var response = JsonConvert.DeserializeObject(await result.Content.ReadAsStringAsync());
 
             if (response == null)
-                throw new EvidenceSourcePermanentServerException(EvidenceSourceMetadata.ERROR_CCR_UPSTREAM_ERROR, "Did not understand the data model returned from upstream source");
+            {
+                throw new EvidenceSourcePermanentServerException(EvidenceSourceMetadata.ERROR_CCR_UPSTREAM_ERROR,
+                    "Did not understand the data model returned from upstream source");
+            }
 
             return response;
         }
 
         [FunctionName("DATSETNAME2")]
-        public async Task<IActionResult> Renhold( 
-         [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-         ILogger log)
+        public async Task<IActionResult> Renhold(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            ILogger log)
         {
             _logger = log;
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
@@ -108,7 +109,8 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
 
         [FunctionName(Constants.EvidenceSourceMetadataFunctionName)]
         public async Task<HttpResponseMessage> Run(
-        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequestMessage req, ILogger log)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequestMessage req,
+            ILogger log)
         {
             var response = new HttpResponseMessage()
             {
@@ -120,7 +122,6 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
                 })),
                 RequestMessage = req
             };
-
 
             return response;
         }
