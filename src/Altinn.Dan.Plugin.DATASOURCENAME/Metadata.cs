@@ -29,12 +29,12 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
                     {
                         new EvidenceValue()
                         {
-                            EvidenceValueName = "felt1",
+                            EvidenceValueName = "field1",
                             ValueType = EvidenceValueType.String
                         },
                         new EvidenceValue()
                         {
-                            EvidenceValueName = "felt2",
+                            EvidenceValueName = "field2",
                             ValueType = EvidenceValueType.String
                         }
                     }
@@ -49,17 +49,17 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
                     {
                         new EvidenceValue()
                         {
-                            EvidenceValueName = "felt1",
+                            EvidenceValueName = "field1",
                             ValueType = EvidenceValueType.String
                         },
                         new EvidenceValue()
                         {
-                            EvidenceValueName = "felt2",
+                            EvidenceValueName = "field2",
                             ValueType = EvidenceValueType.String
                         },
                         new EvidenceValue()
                         {
-                            EvidenceValueName = "felt3",
+                            EvidenceValueName = "field3",
                             ValueType = EvidenceValueType.DateTime
                         }
                     }
