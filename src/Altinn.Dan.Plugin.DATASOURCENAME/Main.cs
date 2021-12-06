@@ -8,8 +8,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nadobe;
 using Nadobe.Common.Exceptions;
+using Nadobe.Common.Interfaces;
 using Nadobe.Common.Models;
 using Nadobe.Common.Util;
 using Newtonsoft.Json;
@@ -21,13 +23,13 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
         private ILogger _logger;
         private HttpClient _client;
         private ApplicationSettings _settings;
-        private EvidenceSourceMetadata _metadata;
+        private IEvidenceSourceMetadata _evidenceSourceMetadata;
 
-        public Main(IHttpClientFactory httpClientFactory, IApplicationSettings settings)
+        public Main(IHttpClientFactory httpClientFactory, IEvidenceSourceMetadata evidenceSourceMetadata, IOptions<ApplicationSettings> settings)
         {
             _client = httpClientFactory.CreateClient("SafeHttpClient");
-            _settings = (ApplicationSettings)settings;
-            _metadata = new EvidenceSourceMetadata(_settings);
+            _evidenceSourceMetadata = evidenceSourceMetadata;
+            _settings = settings.Value;
         }
 
         [Function("DATASETNAME1")]
@@ -43,6 +45,7 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
             var actionResult = await EvidenceSourceResponse.CreateResponse(null, () => GetEvidenceValuesDatasetName1(evidenceHarvesterRequest)) as ObjectResult;
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(actionResult?.Value);
+
             return response;
         }
 
@@ -50,7 +53,7 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
         {
             dynamic content = await MakeRequest(string.Format(_settings.DATASETNAME1URL, evidenceHarvesterRequest.OrganizationNumber), evidenceHarvesterRequest.OrganizationNumber);
 
-            var ecb = new EvidenceBuilder(_metadata, "DATASETNAME1");
+            var ecb = new EvidenceBuilder(_evidenceSourceMetadata, "DATASETNAME1");
             ecb.AddEvidenceValue($"field1", content.responsefield1, EvidenceSourceMetadata.SOURCE);
             ecb.AddEvidenceValue($"field2", content.responsefield2, EvidenceSourceMetadata.SOURCE);
 
@@ -98,6 +101,7 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
             var actionResult = await EvidenceSourceResponse.CreateResponse(null, () => GetEvidenceValuesDatasetName2(evidenceHarvesterRequest)) as ObjectResult;
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(actionResult?.Value);
+
             return response;
         }
 
@@ -105,7 +109,7 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
         {
             dynamic content = await MakeRequest(string.Format(_settings.DATASETNAME2URL, evidenceHarvesterRequest.OrganizationNumber), evidenceHarvesterRequest.OrganizationNumber);
 
-            var ecb = new EvidenceBuilder(_metadata, "DATASETNAME2");
+            var ecb = new EvidenceBuilder(_evidenceSourceMetadata, "DATASETNAME2");
             ecb.AddEvidenceValue($"field1", content.responsefield1, EvidenceSourceMetadata.SOURCE);
             ecb.AddEvidenceValue($"field2", content.responsefield2, EvidenceSourceMetadata.SOURCE);
             ecb.AddEvidenceValue($"field3", content.responsefield3, EvidenceSourceMetadata.SOURCE);
@@ -119,9 +123,10 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
             FunctionContext context)
         {
             _logger = context.GetLogger(context.FunctionDefinition.Name);
-            _logger.LogInformation($"Running metadata for {Constants.EvidenceSourceMetadataFunctionName}");
+            _logger.LogInformation($"Running func metadata for {Constants.EvidenceSourceMetadataFunctionName}");
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(_metadata.GetEvidenceCodes());
+            await response.WriteAsJsonAsync(_evidenceSourceMetadata.GetEvidenceCodes());
+
             return response;
         }
     }

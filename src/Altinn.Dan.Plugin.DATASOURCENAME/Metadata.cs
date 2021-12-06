@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using Altinn.Dan.Plugin.DATASOURCENAME.Config;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nadobe.Common.Interfaces;
 using Nadobe.Common.Models;
 using Nadobe.Common.Models.Enums;
@@ -8,22 +10,27 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
 {
     public class Metadata
     {
+        private readonly ILogger<Metadata> _log;
         private ApplicationSettings _settings;
 
-        public Metadata(IApplicationSettings settings)
+        private const string SERIVCECONTEXT_EBEVIS = "servicecontext ie ebevis";
+
+        public Metadata(ILogger<Metadata> log, IOptions<ApplicationSettings> settings)
         {
-            _settings = (ApplicationSettings)settings;
+            _log = log;
+            _settings = settings.Value;
         }
 
         public List<EvidenceCode> GetEvidenceCodes()
         {
+            _log.LogInformation($"Fetching EvidenceCodes");
             var a = new List<EvidenceCode>()
             {
                 new EvidenceCode()
                 {
                     EvidenceCodeName = "DATASETNAME1",
                     EvidenceSource = EvidenceSourceMetadata.SOURCE,
-                    ServiceContext = "servicecontext ie ebevis",
+                    BelongsToServiceContexts = new List<string>() { SERIVCECONTEXT_EBEVIS },
                     AccessMethod = EvidenceAccessMethod.Open,
                     Values = new List<EvidenceValue>()
                     {
@@ -43,7 +50,7 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
                 {
                     EvidenceCodeName = "DATASETNAME2",
                     EvidenceSource = EvidenceSourceMetadata.SOURCE,
-                    ServiceContext = "servicecontext ie ebevis",
+                    BelongsToServiceContexts = new List<string>() { SERIVCECONTEXT_EBEVIS },
                     AccessMethod = EvidenceAccessMethod.Open,
                     Values = new List<EvidenceValue>()
                     {
@@ -92,16 +99,18 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
 
         public const int ERROR_CERTIFICATE_OF_REGISTRATION_NOT_AVAILABLE = 9;
 
+        private Metadata _metadata;
         private ApplicationSettings _settings;
 
-        public EvidenceSourceMetadata(IApplicationSettings settings)
+        public EvidenceSourceMetadata(Metadata metadata, IOptions<ApplicationSettings> settings)
         {
-            _settings = (ApplicationSettings)settings;
+            _metadata = metadata;
+            _settings = settings.Value;
         }
 
         public List<EvidenceCode> GetEvidenceCodes()
         {
-            return (new Metadata(_settings)).GetEvidenceCodes();
+            return _metadata.GetEvidenceCodes();
         }
     }
 }

@@ -4,8 +4,11 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Altinn.Dan.Plugin.DATASOURCENAME.Config;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using Nadobe.Common.Interfaces;
 using Polly;
 using Polly.Caching.Distributed;
 using Polly.Extensions.Http;
@@ -15,7 +18,7 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
 {
     class Program
     {
-        private static IApplicationSettings ApplicationSettings { get; set; }
+        private static ApplicationSettings ApplicationSettings { get; set; }
 
         private static Task Main(string[] args)
         {
@@ -26,17 +29,19 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
                     services.AddLogging();
                     services.AddHttpClient();
 
-                    services.AddSingleton<IApplicationSettings, ApplicationSettings>();
-                    services.AddSingleton<EvidenceSourceMetadata>();
+                    services.AddSingleton<IEvidenceSourceMetadata, EvidenceSourceMetadata>();
+                    services.AddSingleton<Metadata>();
 
-                    ApplicationSettings = services.BuildServiceProvider().GetRequiredService<IApplicationSettings>();
+                    services.AddOptions<ApplicationSettings>()
+                        .Configure<IConfiguration>((settings, configuration) => configuration.Bind(settings));
+                    ApplicationSettings = services.BuildServiceProvider().GetRequiredService<IOptions<ApplicationSettings>>().Value;
 
                     services.AddStackExchangeRedisCache(option => { option.Configuration = ApplicationSettings.RedisConnectionString; });
 
                     var distributedCache = services.BuildServiceProvider().GetRequiredService<IDistributedCache>();
                     var registry = new PolicyRegistry()
                     {
-                        { "defaultCircuitBreaker", HttpPolicyExtensions.HandleTransientHttpError().CircuitBreakerAsync(4, ApplicationSettings.Breaker_RetryWaitTime) },
+                        { "defaultCircuitBreaker", HttpPolicyExtensions.HandleTransientHttpError().CircuitBreakerAsync(4, ApplicationSettings.BreakerRetryWaitTime) },
                         { "CachePolicy", Policy.CacheAsync(distributedCache.AsAsyncCacheProvider<string>(), TimeSpan.FromHours(12)) }
                     };
                     services.AddPolicyRegistry(registry);
@@ -56,6 +61,7 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
                     });
                 })
                 .Build();
+
             return host.RunAsync();
         }
     }
