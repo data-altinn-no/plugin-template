@@ -21,9 +21,9 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
     public class Main
     {
         private ILogger _logger;
-        private HttpClient _client;
-        private ApplicationSettings _settings;
-        private IEvidenceSourceMetadata _evidenceSourceMetadata;
+        private readonly HttpClient _client;
+        private readonly ApplicationSettings _settings;
+        private readonly IEvidenceSourceMetadata _evidenceSourceMetadata;
 
         public Main(IHttpClientFactory httpClientFactory, IEvidenceSourceMetadata evidenceSourceMetadata, IOptions<ApplicationSettings> settings)
         {
@@ -51,7 +51,7 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
 
         private async Task<List<EvidenceValue>> GetEvidenceValuesDatasetName1(EvidenceHarvesterRequest evidenceHarvesterRequest)
         {
-            dynamic content = await MakeRequest(string.Format(_settings.DATASETNAME1URL, evidenceHarvesterRequest.OrganizationNumber), evidenceHarvesterRequest.OrganizationNumber);
+            var content = await MakeRequest(string.Format(_settings.DATASETNAME1URL, evidenceHarvesterRequest.OrganizationNumber), evidenceHarvesterRequest.OrganizationNumber);
 
             var ecb = new EvidenceBuilder(_evidenceSourceMetadata, "DATASETNAME1");
             ecb.AddEvidenceValue($"field1", content.responsefield1, EvidenceSourceMetadata.SOURCE);
