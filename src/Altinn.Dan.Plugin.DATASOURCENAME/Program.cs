@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -8,7 +9,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Nadobe.Common.Interfaces;
 using Polly;
 using Polly.Caching.Distributed;
 using Polly.Extensions.Http;
@@ -27,10 +27,9 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
                 .ConfigureServices(services =>
                 {
                     services.AddLogging();
+                    // See https://docs.microsoft.com/en-us/azure/azure-monitor/app/worker-service#using-application-insights-sdk-for-worker-services
+                    services.AddApplicationInsightsTelemetryWorkerService();
                     services.AddHttpClient();
-
-                    services.AddSingleton<IEvidenceSourceMetadata, EvidenceSourceMetadata>();
-                    services.AddSingleton<Metadata>();
 
                     services.AddOptions<ApplicationSettings>()
                         .Configure<IConfiguration>((settings, configuration) => configuration.Bind(settings));
@@ -52,6 +51,20 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
 
                     // Client configured without circuit breaker policies. shorter timeout
                     services.AddHttpClient("CachedHttpClient", client => { client.Timeout = new TimeSpan(0, 0, 5); });
+
+                    // Client configured with enterprise certificate authentication
+                    services.AddHttpClient("ECHttpClient", client =>
+                        {
+                            client.DefaultRequestHeaders.Add("Accept", "application/json");
+                        })
+                        .AddPolicyHandlerFromRegistry("defaultCircuitBreaker")
+                        .ConfigurePrimaryHttpMessageHandler(() =>
+                        {
+                            var handler = new HttpClientHandler();
+                            handler.ClientCertificates.Add(ApplicationSettings.Certificate);
+
+                            return handler;
+                        });
 
                     services.Configure<JsonSerializerOptions>(options =>
                     {
