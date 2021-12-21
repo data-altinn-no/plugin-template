@@ -4,10 +4,12 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Altinn.Dan.Plugin.DATASOURCENAME.Config;
+using Azure.Core.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nadobe;
 using Nadobe.Common.Exceptions;
 using Nadobe.Common.Models;
@@ -19,15 +21,13 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
     public class Main
     {
         private ILogger _logger;
-        private HttpClient _client;
-        private ApplicationSettings _settings;
-        private EvidenceSourceMetadata _metadata;
+        private readonly HttpClient _client;
+        private readonly ApplicationSettings _settings;
 
-        public Main(IHttpClientFactory httpClientFactory, IApplicationSettings settings)
+        public Main(IHttpClientFactory httpClientFactory, IOptions<ApplicationSettings> settings)
         {
             _client = httpClientFactory.CreateClient("SafeHttpClient");
-            _settings = (ApplicationSettings)settings;
-            _metadata = new EvidenceSourceMetadata(_settings);
+            _settings = settings.Value;
         }
 
         [Function("DATASETNAME1")]
@@ -43,16 +43,17 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
             var actionResult = await EvidenceSourceResponse.CreateResponse(null, () => GetEvidenceValuesDatasetName1(evidenceHarvesterRequest)) as ObjectResult;
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(actionResult?.Value);
+
             return response;
         }
 
         private async Task<List<EvidenceValue>> GetEvidenceValuesDatasetName1(EvidenceHarvesterRequest evidenceHarvesterRequest)
         {
-            dynamic content = await MakeRequest(string.Format(_settings.DATASETNAME1URL, evidenceHarvesterRequest.OrganizationNumber), evidenceHarvesterRequest.OrganizationNumber);
+            var content = await MakeRequest(string.Format(_settings.DATASETNAME1URL, evidenceHarvesterRequest.OrganizationNumber), evidenceHarvesterRequest.OrganizationNumber);
 
-            var ecb = new EvidenceBuilder(_metadata, "DATASETNAME1");
-            ecb.AddEvidenceValue($"field1", content.responsefield1, EvidenceSourceMetadata.SOURCE);
-            ecb.AddEvidenceValue($"field2", content.responsefield2, EvidenceSourceMetadata.SOURCE);
+            var ecb = new EvidenceBuilder(new Metadata(), "DATASETNAME1");
+            ecb.AddEvidenceValue($"field1", content.responsefield1, Metadata.SOURCE);
+            ecb.AddEvidenceValue($"field2", content.responsefield2, Metadata.SOURCE);
 
             return ecb.GetEvidenceValues();
         }
@@ -67,18 +68,18 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
             }
             catch (HttpRequestException ex)
             {
-                throw new EvidenceSourcePermanentServerException(EvidenceSourceMetadata.ERROR_CCR_UPSTREAM_ERROR, null, ex);
+                throw new EvidenceSourcePermanentServerException(Metadata.ERROR_CCR_UPSTREAM_ERROR, null, ex);
             }
 
             if (result.StatusCode == HttpStatusCode.NotFound)
             {
-                throw new EvidenceSourcePermanentClientException(EvidenceSourceMetadata.ERROR_ORGANIZATION_NOT_FOUND, $"{organizationNumber} could not be found");
+                throw new EvidenceSourcePermanentClientException(Metadata.ERROR_ORGANIZATION_NOT_FOUND, $"{organizationNumber} could not be found");
             }
 
             var response = JsonConvert.DeserializeObject(await result.Content.ReadAsStringAsync());
             if (response == null)
             {
-                throw new EvidenceSourcePermanentServerException(EvidenceSourceMetadata.ERROR_CCR_UPSTREAM_ERROR,
+                throw new EvidenceSourcePermanentServerException(Metadata.ERROR_CCR_UPSTREAM_ERROR,
                     "Did not understand the data model returned from upstream source");
             }
 
@@ -98,6 +99,7 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
             var actionResult = await EvidenceSourceResponse.CreateResponse(null, () => GetEvidenceValuesDatasetName2(evidenceHarvesterRequest)) as ObjectResult;
             var response = req.CreateResponse(HttpStatusCode.OK);
             await response.WriteAsJsonAsync(actionResult?.Value);
+
             return response;
         }
 
@@ -105,23 +107,25 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
         {
             dynamic content = await MakeRequest(string.Format(_settings.DATASETNAME2URL, evidenceHarvesterRequest.OrganizationNumber), evidenceHarvesterRequest.OrganizationNumber);
 
-            var ecb = new EvidenceBuilder(_metadata, "DATASETNAME2");
-            ecb.AddEvidenceValue($"field1", content.responsefield1, EvidenceSourceMetadata.SOURCE);
-            ecb.AddEvidenceValue($"field2", content.responsefield2, EvidenceSourceMetadata.SOURCE);
-            ecb.AddEvidenceValue($"field3", content.responsefield3, EvidenceSourceMetadata.SOURCE);
+            var ecb = new EvidenceBuilder(new Metadata(), "DATASETNAME2");
+            ecb.AddEvidenceValue($"field1", content.responsefield1, Metadata.SOURCE);
+            ecb.AddEvidenceValue($"field2", content.responsefield2, Metadata.SOURCE);
+            ecb.AddEvidenceValue($"field3", content.responsefield3, Metadata.SOURCE);
 
             return ecb.GetEvidenceValues();
         }
 
         [Function(Constants.EvidenceSourceMetadataFunctionName)]
-        public async Task<HttpResponseData> Metadata(
+        public async Task<HttpResponseData> GetMetadata(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequestData req,
             FunctionContext context)
         {
             _logger = context.GetLogger(context.FunctionDefinition.Name);
-            _logger.LogInformation($"Running metadata for {Constants.EvidenceSourceMetadataFunctionName}");
+            _logger.LogInformation($"Running func metadata for {Constants.EvidenceSourceMetadataFunctionName}");
             var response = req.CreateResponse(HttpStatusCode.OK);
-            await response.WriteAsJsonAsync(_metadata.GetEvidenceCodes());
+            await response.WriteAsJsonAsync(new Metadata().GetEvidenceCodes(),
+                new NewtonsoftJsonObjectSerializer(new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.Auto }));
+
             return response;
         }
     }
