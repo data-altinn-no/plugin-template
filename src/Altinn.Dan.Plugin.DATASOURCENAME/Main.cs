@@ -1,9 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Altinn.Dan.Plugin.DATASOURCENAME.Config;
+using Altinn.Dan.Plugin.DATASOURCENAME.Models;
 using Azure.Core.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
@@ -49,41 +52,51 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
 
         private async Task<List<EvidenceValue>> GetEvidenceValuesDatasetName1(EvidenceHarvesterRequest evidenceHarvesterRequest)
         {
-            var content = await MakeRequest(string.Format(_settings.DATASETNAME1URL, evidenceHarvesterRequest.OrganizationNumber), evidenceHarvesterRequest.OrganizationNumber);
+            var content = await PostRequest<DatasourceResponse>(_settings.DATASETNAME1URL, evidenceHarvesterRequest.SubjectParty);
 
             var ecb = new EvidenceBuilder(new Metadata(), "DATASETNAME1");
-            ecb.AddEvidenceValue($"field1", content.responsefield1, Metadata.SOURCE);
-            ecb.AddEvidenceValue($"field2", content.responsefield2, Metadata.SOURCE);
+            ecb.AddEvidenceValue($"field1", content.ResponseField1, Metadata.SOURCE);
+            ecb.AddEvidenceValue($"field2", content.ResponseField2, Metadata.SOURCE);
 
             return ecb.GetEvidenceValues();
         }
 
-        private async Task<dynamic> MakeRequest(string target, string organizationNumber)
+        private async Task<T> PostRequest<T>(string target, Party subject) where T : new()
         {
-            HttpResponseMessage result = null;
+            HttpResponseMessage response = null;
             try
             {
-                var request = new HttpRequestMessage(HttpMethod.Get, target);
-                result = await _client.SendAsync(request);
-            }
-            catch (HttpRequestException ex)
-            {
-                throw new EvidenceSourcePermanentServerException(Metadata.ERROR_CCR_UPSTREAM_ERROR, null, ex);
-            }
+                var datasourceRequest = new DatasourceRequest
+                {
+                    RequestField1 = subject.NorwegianSocialSecurityNumber,
+                    RequestField2 = subject.Id
+                };
 
-            if (result.StatusCode == HttpStatusCode.NotFound)
-            {
-                throw new EvidenceSourcePermanentClientException(Metadata.ERROR_ORGANIZATION_NOT_FOUND, $"{organizationNumber} could not be found");
+                var body = new StringContent(JsonConvert.SerializeObject(datasourceRequest));
+                body.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+                response = await _client.PostAsync(target, body);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                switch (response.StatusCode)
+                {
+                    case HttpStatusCode.OK:
+                    {
+                        return JsonConvert.DeserializeObject<T>(responseContent);
+                    }
+                    default:
+                    {
+                        throw new EvidenceSourcePermanentClientException(Metadata.ERROR_CCR_UPSTREAM_ERROR,
+                            $"External API call failed ({(int)response.StatusCode} - {response.StatusCode})" + (string.IsNullOrEmpty(responseContent) ? string.Empty : $", details: {responseContent}"));
+                    }
+                }
             }
-
-            var response = JsonConvert.DeserializeObject(await result.Content.ReadAsStringAsync());
-            if (response == null)
+            catch (HttpRequestException e)
             {
-                throw new EvidenceSourcePermanentServerException(Metadata.ERROR_CCR_UPSTREAM_ERROR,
-                    "Did not understand the data model returned from upstream source");
+                throw new EvidenceSourcePermanentServerException(Metadata.ERROR_CCR_UPSTREAM_ERROR, null, e);
             }
-
-            return response;
+            finally
+            {
+                response?.Dispose();
+            }
         }
 
         [Function("DATASETNAME2")]
@@ -105,14 +118,48 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
 
         private async Task<List<EvidenceValue>> GetEvidenceValuesDatasetName2(EvidenceHarvesterRequest evidenceHarvesterRequest)
         {
-            dynamic content = await MakeRequest(string.Format(_settings.DATASETNAME2URL, evidenceHarvesterRequest.OrganizationNumber), evidenceHarvesterRequest.OrganizationNumber);
+            var content = await GetRequest<DatasourceResponse>(_settings.DATASETNAME2URL, evidenceHarvesterRequest.SubjectParty.NorwegianOrganizationNumber);
 
             var ecb = new EvidenceBuilder(new Metadata(), "DATASETNAME2");
-            ecb.AddEvidenceValue($"field1", content.responsefield1, Metadata.SOURCE);
-            ecb.AddEvidenceValue($"field2", content.responsefield2, Metadata.SOURCE);
-            ecb.AddEvidenceValue($"field3", content.responsefield3, Metadata.SOURCE);
+            ecb.AddEvidenceValue($"default", JsonConvert.SerializeObject(content), Metadata.SOURCE);
 
             return ecb.GetEvidenceValues();
+        }
+
+        private async Task<T> GetRequest<T>(string target, string organizationNumber) where T : new()
+        {
+            HttpResponseMessage response = null;
+            try
+            {
+                var completeUrl = target.Replace("{orgNo}", Uri.EscapeDataString(organizationNumber));
+                response = await _client.GetAsync(completeUrl);
+                var responseData = await response.Content.ReadAsStringAsync();
+                switch (response.StatusCode)
+                {
+                    case HttpStatusCode.OK:
+                    {
+                        return JsonConvert.DeserializeObject<T>(responseData);
+                    }
+                    case HttpStatusCode.NotFound:
+                    {
+                        throw new EvidenceSourcePermanentClientException(Metadata.ERROR_ORGANIZATION_NOT_FOUND,
+                            $"{organizationNumber} could not be found");
+                    }
+                    default:
+                    {
+                        throw new EvidenceSourcePermanentClientException(Metadata.ERROR_CCR_UPSTREAM_ERROR,
+                            $"External API call to Kartverket failed ({(int)response.StatusCode} - {response.StatusCode})" + (string.IsNullOrEmpty(responseData) ? string.Empty : $", details: {responseData}"));
+                    }
+                }
+            }
+            catch (HttpRequestException e)
+            {
+                throw new EvidenceSourcePermanentServerException(Metadata.ERROR_CCR_UPSTREAM_ERROR, null, e);
+            }
+            finally
+            {
+                response?.Dispose();
+            }
         }
 
         [Function(Constants.EvidenceSourceMetadataFunctionName)]

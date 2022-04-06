@@ -1,7 +1,10 @@
 using System.Collections.Generic;
+using Altinn.Dan.Plugin.DATASOURCENAME.Models;
 using Nadobe.Common.Interfaces;
 using Nadobe.Common.Models;
 using Nadobe.Common.Models.Enums;
+using Newtonsoft.Json;
+using NJsonSchema;
 
 namespace Altinn.Dan.Plugin.DATASOURCENAME
 {
@@ -22,9 +25,9 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
 
         public List<EvidenceCode> GetEvidenceCodes()
         {
-            var a = new List<EvidenceCode>()
+            return new List<EvidenceCode>()
             {
-                new EvidenceCode()
+                new()
                 {
                     EvidenceCodeName = "DATASETNAME1",
                     EvidenceSource = SOURCE,
@@ -32,19 +35,19 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
                     AccessMethod = EvidenceAccessMethod.Open,
                     Values = new List<EvidenceValue>()
                     {
-                        new EvidenceValue()
+                        new()
                         {
                             EvidenceValueName = "field1",
                             ValueType = EvidenceValueType.String
                         },
-                        new EvidenceValue()
+                        new()
                         {
                             EvidenceValueName = "field2",
                             ValueType = EvidenceValueType.String
                         }
                     }
                 },
-                new EvidenceCode()
+                new()
                 {
                     EvidenceCodeName = "DATASETNAME2",
                     EvidenceSource = SOURCE,
@@ -52,26 +55,22 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
                     AccessMethod = EvidenceAccessMethod.Open,
                     Values = new List<EvidenceValue>()
                     {
-                        new EvidenceValue()
+                        new()
                         {
-                            EvidenceValueName = "field1",
-                            ValueType = EvidenceValueType.String
-                        },
-                        new EvidenceValue()
+                            EvidenceValueName = "default",
+                            ValueType = EvidenceValueType.JsonSchema,
+                            JsonSchemaDefintion = JsonSchema.FromType<DatasourceResponse>().ToJson(Formatting.Indented)
+                        }
+                    },
+                    AuthorizationRequirements = new List<Requirement>
+                    {
+                        new MaskinportenScopeRequirement
                         {
-                            EvidenceValueName = "field2",
-                            ValueType = EvidenceValueType.String
-                        },
-                        new EvidenceValue()
-                        {
-                            EvidenceValueName = "field3",
-                            ValueType = EvidenceValueType.DateTime
+                            RequiredScopes = new List<string> { "altinn:dataaltinnno/scope" }
                         }
                     }
                 }
             };
-
-            return a;
         }
     }
 }
