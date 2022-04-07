@@ -3,10 +3,12 @@
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    "DATASETNAME1URL": "",
-    "DATASETNAME2URL": "",
+    "DATASETNAME1URL": "https://some.com/post/url/",
+    "DATASETNAME2URL": "https://some.com/get/url/{orgNo}",
     "RedisConnectionString": "",
     "BreakerRetryWaitTime": "",
-    "Certificate": ""
+    "KeyVaultName": "",
+    "CertificateName": "",
+    "SecretName": ""
   }
 }

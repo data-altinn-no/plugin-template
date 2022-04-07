@@ -1,7 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Altinn.Dan.Plugin.DATASOURCENAME.Config;
 using Microsoft.Extensions.Caching.Distributed;
@@ -9,6 +8,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 using Polly;
 using Polly.Caching.Distributed;
 using Polly.Extensions.Http;
@@ -66,12 +68,21 @@ namespace Altinn.Dan.Plugin.DATASOURCENAME
                             return handler;
                         });
 
-                    services.Configure<JsonSerializerOptions>(options =>
+                    //Newtonsoft.Json
+                    JsonConvert.DefaultSettings = () => new JsonSerializerSettings
                     {
-                        options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-                        options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-                        options.Converters.Add(new JsonStringEnumConverter());
-                    });
+                        DefaultValueHandling = DefaultValueHandling.Ignore,
+                        ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                        Converters = new List<JsonConverter>() { new StringEnumConverter() }
+                    };
+
+                    //System.Text.Json
+                    // services.Configure<JsonSerializerOptions>(options =>
+                    // {
+                    //     options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                    //     options.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                    //     options.Converters.Add(new JsonStringEnumConverter());
+                    // });
                 })
                 .Build();
 
