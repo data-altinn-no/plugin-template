@@ -1,76 +1,91 @@
 using System.Collections.Generic;
+using System.Net;
+using System.Threading.Tasks;
 using Altinn.Dan.Plugin.DATASOURCENAME.Models;
-using Nadobe.Common.Interfaces;
-using Nadobe.Common.Models;
-using Nadobe.Common.Models.Enums;
-using Newtonsoft.Json;
-using NJsonSchema;
+using Dan.Common;
+using Dan.Common.Enums;
+using Dan.Common.Interfaces;
+using Dan.Common.Models;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+using Newtonsoft.Json.Schema.Generation;
 
-namespace Altinn.Dan.Plugin.DATASOURCENAME
+namespace Altinn.Dan.Plugin.DATASOURCENAME;
+
+/// <summary>
+/// All plugins must implement IEvidenceSourceMetadata, which describes that datasets returned by this plugin. An example is implemented below.
+/// </summary>
+public class Metadata : IEvidenceSourceMetadata
 {
-    public class Metadata : IEvidenceSourceMetadata
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    public List<EvidenceCode> GetEvidenceCodes()
     {
-        private const string SERIVCECONTEXT_EBEVIS = "servicecontext ie ebevis";
+        JSchemaGenerator generator = new JSchemaGenerator();
 
-        public const string SOURCE = "DATASOURCENAME";
-        public const int ERROR_CCR_UPSTREAM_ERROR = 2;
-        public const int ERROR_ORGANIZATION_NOT_FOUND = 1;
-        public const int ERROR_NO_REPORT_AVAILABLE = 3;
-        public const int ERROR_ASYNC_REQUIRED_PARAMS_MISSING = 4;
-        public const int ERROR_ASYNC_ALREADY_INITIALIZED = 5;
-        public const int ERROR_ASYNC_NOT_INITIALIZED = 6;
-        public const int ERROR_AYNC_STATE_STORAGE = 7;
-        public const int ERROR_ASYNC_HARVEST_NOT_AVAILABLE = 8;
-        public const int ERROR_CERTIFICATE_OF_REGISTRATION_NOT_AVAILABLE = 9;
-
-        public List<EvidenceCode> GetEvidenceCodes()
+        return new List<EvidenceCode>()
         {
-            return new List<EvidenceCode>()
+            new()
             {
-                new()
+                EvidenceCodeName = Plugin.SimpleDatasetName,
+                EvidenceSource = Plugin.SourceName,
+                Values = new List<EvidenceValue>()
                 {
-                    EvidenceCodeName = "DATASETNAME1",
-                    EvidenceSource = SOURCE,
-                    BelongsToServiceContexts = new List<string>() { SERIVCECONTEXT_EBEVIS },
-                    AccessMethod = EvidenceAccessMethod.Open,
-                    Values = new List<EvidenceValue>()
+                    new()
                     {
-                        new()
-                        {
-                            EvidenceValueName = "field1",
-                            ValueType = EvidenceValueType.String
-                        },
-                        new()
-                        {
-                            EvidenceValueName = "field2",
-                            ValueType = EvidenceValueType.String
-                        }
-                    }
-                },
-                new()
-                {
-                    EvidenceCodeName = "DATASETNAME2",
-                    EvidenceSource = SOURCE,
-                    BelongsToServiceContexts = new List<string>() { SERIVCECONTEXT_EBEVIS },
-                    AccessMethod = EvidenceAccessMethod.Open,
-                    Values = new List<EvidenceValue>()
-                    {
-                        new()
-                        {
-                            EvidenceValueName = "default",
-                            ValueType = EvidenceValueType.JsonSchema,
-                            JsonSchemaDefintion = JsonSchema.FromType<DatasourceResponse>().ToJson(Formatting.Indented)
-                        }
+                        EvidenceValueName = "field1",
+                        ValueType = EvidenceValueType.String
                     },
-                    AuthorizationRequirements = new List<Requirement>
+                    new()
                     {
-                        new MaskinportenScopeRequirement
-                        {
-                            RequiredScopes = new List<string> { "altinn:dataaltinnno/scope" }
-                        }
+                        EvidenceValueName = "field2",
+                        ValueType = EvidenceValueType.String
                     }
                 }
-            };
-        }
+            },
+            new()
+            {
+                EvidenceCodeName = Plugin.RichDatasetName,
+                EvidenceSource = Plugin.SourceName,
+                Values = new List<EvidenceValue>()
+                {
+                    new()
+                    {
+                        // Convention for rich datasets with a single JSON model is to use the value name "default"
+                        EvidenceValueName = "default",
+                        ValueType = EvidenceValueType.JsonSchema,
+                        JsonSchemaDefintion =  generator.Generate(typeof(ExampleModel)).ToString()
+                    }
+                },
+                AuthorizationRequirements = new List<Requirement>
+                {
+                    new MaskinportenScopeRequirement
+                    {
+                        RequiredScopes = new List<string> { "altinn:dataaltinnno/somescope" }
+                    }
+                }
+            }
+        };
     }
+
+
+    /// <summary>
+    /// This function must be defined in all DAN plugins, and is used by core to enumerate the available datasets across all plugins.
+    /// Normally this should not be changed.
+    /// </summary>
+    /// <param name="req"></param>
+    /// <param name="context"></param>
+    /// <returns></returns>
+    [Function(Constants.EvidenceSourceMetadataFunctionName)]
+    public async Task<HttpResponseData> GetMetadataAsync(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequestData req,
+        FunctionContext context)
+    {
+        var response = req.CreateResponse(HttpStatusCode.OK);
+        await response.WriteAsJsonAsync(GetEvidenceCodes());
+        return response;
+    }
+
 }
