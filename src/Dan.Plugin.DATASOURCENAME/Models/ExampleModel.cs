@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace Altinn.Dan.Plugin.DATASOURCENAME.Models;
+namespace Dan.Plugin.DATASOURCENAME.Models;
 
 public class ExampleModel
 {

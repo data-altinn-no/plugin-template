@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Altinn.Dan.Plugin.DATASOURCENAME.Models;
 using Dan.Common;
 using Dan.Common.Exceptions;
 using Dan.Common.Interfaces;
 using Dan.Common.Models;
 using Dan.Common.Util;
+using Dan.Plugin.DATASOURCENAME.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
-namespace Altinn.Dan.Plugin.DATASOURCENAME;
+namespace Dan.Plugin.DATASOURCENAME;
 
 public class Plugin
 {
@@ -120,8 +120,8 @@ public class Plugin
         {
             throw result.StatusCode switch
             {
-                HttpStatusCode.NotFound => new EvidenceSourcePermanentClientException(ERROR_NOT_FOUND, "Upstream source could not find provided company-id"),
-                HttpStatusCode.BadRequest => new EvidenceSourcePermanentClientException(ERROR_INVALID_INPUT,  "Upstream source indicated an invalid company-id (400)"),
+                HttpStatusCode.NotFound => new EvidenceSourcePermanentClientException(ERROR_NOT_FOUND, "Upstream source could not find the requested entity (404)"),
+                HttpStatusCode.BadRequest => new EvidenceSourcePermanentClientException(ERROR_INVALID_INPUT,  "Upstream source indicated an invalid request (400)"),
                 _ => new EvidenceSourceTransientException(ERROR_UPSTREAM_UNAVAILBLE, $"Upstream source retuned an HTTP error code ({(int)result.StatusCode})")
             };
         }
@@ -133,7 +133,7 @@ public class Plugin
         catch (Exception ex)
         {
             _logger.LogError("Unable to parse data returned from upstream source: {exceptionType}: {exceptionMessage}", ex.GetType().Name, ex.Message);
-            throw new EvidenceSourcePermanentServerException(ERROR_UNABLE_TO_PARSE_RESPONSE, "Did not understand the data model returned from upstream source", ex);
+            throw new EvidenceSourcePermanentServerException(ERROR_UNABLE_TO_PARSE_RESPONSE, "Could not parse the data model returned from upstream source", ex);
         }
     }
 }

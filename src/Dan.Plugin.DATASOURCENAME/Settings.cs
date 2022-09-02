@@ -1,4 +1,4 @@
-namespace Altinn.Dan.Plugin.DATASOURCENAME;
+namespace Dan.Plugin.DATASOURCENAME;
 
 public class Settings
 {

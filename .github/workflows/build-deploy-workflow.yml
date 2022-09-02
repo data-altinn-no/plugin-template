@@ -10,10 +10,10 @@ on:
 
 jobs:
  run:
-   uses: Altinn/dan-deploy-actions/.github/workflows/dan-deploy-flow.yml@main
+   uses: data-altinn-no/deploy-actions/.github/workflows/dan-deploy-flow.yml@main
    with:
      artifact_name: 'dan-plugin-DATASOURCENAME' # Can be omitted, defaults to 'artifact'
-     function_project_path: 'src/Altinn.Dan.Plugin.DATASOURCENAME'
+     function_project_path: 'src/Dan.Plugin.DATASOURCENAME'
    secrets:
      function_app_name: ${{ secrets.FUNCTIONAPP_NAME }}
      publish_profile: ${{ secrets.AZURE_FUNCTION_PUBLISH_CREDS }}

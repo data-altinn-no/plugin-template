@@ -1,4 +1,4 @@
-using Altinn.Dan.Plugin.DATASOURCENAME;
+using Dan.Plugin.DATASOURCENAME;
 using Microsoft.Extensions.Hosting;
 using Dan.Common.Extensions;
 using Microsoft.Extensions.DependencyInjection;

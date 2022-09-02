@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Altinn.Dan.Plugin.DATASOURCENAME.Test
+namespace Dan.Plugin.DATASOURCENAME.Test
 {
     public class UnitTest1
     {

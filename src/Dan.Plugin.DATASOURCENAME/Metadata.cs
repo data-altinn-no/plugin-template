@@ -1,16 +1,16 @@
 using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
-using Altinn.Dan.Plugin.DATASOURCENAME.Models;
 using Dan.Common;
 using Dan.Common.Enums;
 using Dan.Common.Interfaces;
 using Dan.Common.Models;
+using Dan.Plugin.DATASOURCENAME.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Newtonsoft.Json.Schema.Generation;
 
-namespace Altinn.Dan.Plugin.DATASOURCENAME;
+namespace Dan.Plugin.DATASOURCENAME;
 
 /// <summary>
 /// All plugins must implement IEvidenceSourceMetadata, which describes that datasets returned by this plugin. An example is implemented below.
@@ -29,8 +29,8 @@ public class Metadata : IEvidenceSourceMetadata
         {
             new()
             {
-                EvidenceCodeName = Plugin.SimpleDatasetName,
-                EvidenceSource = Plugin.SourceName,
+                EvidenceCodeName = global::Dan.Plugin.DATASOURCENAME.Plugin.SimpleDatasetName,
+                EvidenceSource = global::Dan.Plugin.DATASOURCENAME.Plugin.SourceName,
                 Values = new List<EvidenceValue>()
                 {
                     new()
@@ -47,8 +47,8 @@ public class Metadata : IEvidenceSourceMetadata
             },
             new()
             {
-                EvidenceCodeName = Plugin.RichDatasetName,
-                EvidenceSource = Plugin.SourceName,
+                EvidenceCodeName = global::Dan.Plugin.DATASOURCENAME.Plugin.RichDatasetName,
+                EvidenceSource = global::Dan.Plugin.DATASOURCENAME.Plugin.SourceName,
                 Values = new List<EvidenceValue>()
                 {
                     new()
