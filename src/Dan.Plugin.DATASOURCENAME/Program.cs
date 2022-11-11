@@ -16,8 +16,7 @@ var host = new HostBuilder()
 
         // This makes IOption<Settings> available in the DI container.
         var configurationRoot = context.Configuration;
-        services.Configure<Settings>(
-            configurationRoot.GetSection(nameof(Settings)));
+        services.Configure<Settings>(configurationRoot);
     })
     .Build();
 
