@@ -5,11 +5,11 @@
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
 
 
-    "Settings:DefaultCircuitBreakerOpenCircuitTimeSeconds": "10",
-    "Settings:DefaultCircuitBreakerFailureBeforeTripping": "4",
-    "Settings:SafeHttpClientTimeout": "30",
+    "DefaultCircuitBreakerOpenCircuitTimeSeconds": "10",
+    "DefaultCircuitBreakerFailureBeforeTripping": "4",
+    "SafeHttpClientTimeout": "30",
 
-    "Settings:EndpointUrl": "https://example.com"
+    "EndpointUrl": "https://example.com"
 
   }
 }
