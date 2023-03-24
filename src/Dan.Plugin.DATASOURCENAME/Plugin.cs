@@ -48,6 +48,8 @@ public class Plugin
         _logger = loggerFactory.CreateLogger<Plugin>();
         _settings = settings.Value;
         _evidenceSourceMetadata = evidenceSourceMetadata;
+
+        _logger.LogDebug("Initialized plugin! This should be visible in the console");
     }
 
     [Function(SimpleDatasetName)]
@@ -55,6 +57,11 @@ public class Plugin
         [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequestData req,
         FunctionContext context)
     {
+
+        _logger.LogDebug("debug HERE");
+        _logger.LogWarning("warning HERE");
+        _logger.LogError("error HERE");
+
         var evidenceHarvesterRequest = await req.ReadFromJsonAsync<EvidenceHarvesterRequest>();
 
         return await EvidenceSourceResponse.CreateResponse(req,
@@ -97,7 +104,7 @@ public class Plugin
         // dataset model.
         //
         // Another way to do this is to not generate the schema from the model, but "hand code" the schema in the metadata and validate the
-        // received JSON against it, throwing eg. a EvidenceSourcePermanentServerException if it fails to match. 
+        // received JSON against it, throwing eg. a EvidenceSourcePermanentServerException if it fails to match.
         ecb.AddEvidenceValue("default", JsonConvert.SerializeObject(exampleModel), SourceName);
 
         return ecb.GetEvidenceValues();
