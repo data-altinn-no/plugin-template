@@ -8,6 +8,7 @@ using Dan.Common.Exceptions;
 using Dan.Common.Interfaces;
 using Dan.Common.Models;
 using Dan.Common.Util;
+using Dan.Plugin.DATASOURCENAME.Config;
 using Dan.Plugin.DATASOURCENAME.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
@@ -24,20 +25,6 @@ public class Plugin
     private readonly HttpClient _client;
     private readonly Settings _settings;
 
-    // The datasets must supply a human-readable source description from which they originate. Individual fields might come from different sources, and this string should reflect that (ie. name all possible sources).
-    public const string SourceName = "Digitaliseringsdirektoratet";
-
-    // The function names (ie. HTTP endpoint names) and the dataset names must match. Using constants to avoid errors.
-    public const string SimpleDatasetName = "SimpleDataset";
-    public const string RichDatasetName = "RichDataset";
-
-    // These are not mandatory, but there should be a distinct error code (any integer) for all types of errors that can occur. The error codes does not have to be globally
-    // unique. These should be used within either transient or permanent exceptions, see Plugin.cs for examples.
-    private const int ERROR_UPSTREAM_UNAVAILBLE = 1001;
-    private const int ERROR_INVALID_INPUT = 1002;
-    private const int ERROR_NOT_FOUND = 1003;
-    private const int ERROR_UNABLE_TO_PARSE_RESPONSE = 1004;
-
     public Plugin(
         IHttpClientFactory httpClientFactory,
         ILoggerFactory loggerFactory,
@@ -52,7 +39,7 @@ public class Plugin
         _logger.LogDebug("Initialized plugin! This should be visible in the console");
     }
 
-    [Function(SimpleDatasetName)]
+    [Function(PluginConstants.SimpleDatasetName)]
     public async Task<HttpResponseData> GetSimpleDatasetAsync(
         [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequestData req,
         FunctionContext context)
@@ -68,7 +55,7 @@ public class Plugin
             () => GetEvidenceValuesSimpledataset(evidenceHarvesterRequest));
     }
 
-    [Function(RichDatasetName)]
+    [Function(PluginConstants.RichDatasetName)]
     public async Task<HttpResponseData> GetRichDatasetAsync(
         [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequestData req,
         FunctionContext context)
@@ -84,9 +71,9 @@ public class Plugin
         var url = _settings.EndpointUrl + "?someparameter=" + evidenceHarvesterRequest.OrganizationNumber;
         var exampleModel = await MakeRequest<ExampleModel>(url);
 
-        var ecb = new EvidenceBuilder(_evidenceSourceMetadata, SimpleDatasetName);
-        ecb.AddEvidenceValue("field1", exampleModel.ResponseField1, SourceName);
-        ecb.AddEvidenceValue("field2", exampleModel.ResponseField2, SourceName);
+        var ecb = new EvidenceBuilder(_evidenceSourceMetadata, PluginConstants.SimpleDatasetName);
+        ecb.AddEvidenceValue("field1", exampleModel.ResponseField1, PluginConstants.SourceName);
+        ecb.AddEvidenceValue("field2", exampleModel.ResponseField2, PluginConstants.SourceName);
 
         return ecb.GetEvidenceValues();
     }
@@ -97,15 +84,9 @@ public class Plugin
         var url = _settings.EndpointUrl + "?someparameter=" + evidenceHarvesterRequest.OrganizationNumber;
         var exampleModel = await MakeRequest<ExampleModel>(url);
 
-        var ecb = new EvidenceBuilder(_evidenceSourceMetadata, RichDatasetName);
+        var ecb = new EvidenceBuilder(_evidenceSourceMetadata, PluginConstants.RichDatasetName);
 
-        // Here we reserialize the model. While it is possible to merely send the received JSON string directly through without parsing it,
-        // the extra step of deserializing it to a known model ensures that the JSON schema supplied in the metadata always matches the
-        // dataset model.
-        //
-        // Another way to do this is to not generate the schema from the model, but "hand code" the schema in the metadata and validate the
-        // received JSON against it, throwing eg. a EvidenceSourcePermanentServerException if it fails to match.
-        ecb.AddEvidenceValue("default", JsonConvert.SerializeObject(exampleModel), SourceName);
+        ecb.AddEvidenceValue("default", exampleModel, PluginConstants.SourceName);
 
         return ecb.GetEvidenceValues();
     }
@@ -120,16 +101,16 @@ public class Plugin
         }
         catch (HttpRequestException ex)
         {
-            throw new EvidenceSourceTransientException(ERROR_UPSTREAM_UNAVAILBLE, "Error communicating with upstream source", ex);
+            throw new EvidenceSourceTransientException(PluginConstants.ErrorUpstreamUnavailble, "Error communicating with upstream source", ex);
         }
 
         if (!result.IsSuccessStatusCode)
         {
             throw result.StatusCode switch
             {
-                HttpStatusCode.NotFound => new EvidenceSourcePermanentClientException(ERROR_NOT_FOUND, "Upstream source could not find the requested entity (404)"),
-                HttpStatusCode.BadRequest => new EvidenceSourcePermanentClientException(ERROR_INVALID_INPUT,  "Upstream source indicated an invalid request (400)"),
-                _ => new EvidenceSourceTransientException(ERROR_UPSTREAM_UNAVAILBLE, $"Upstream source retuned an HTTP error code ({(int)result.StatusCode})")
+                HttpStatusCode.NotFound => new EvidenceSourcePermanentClientException(PluginConstants.ErrorNotFound, "Upstream source could not find the requested entity (404)"),
+                HttpStatusCode.BadRequest => new EvidenceSourcePermanentClientException(PluginConstants.ErrorInvalidInput,  "Upstream source indicated an invalid request (400)"),
+                _ => new EvidenceSourceTransientException(PluginConstants.ErrorUpstreamUnavailble, $"Upstream source retuned an HTTP error code ({(int)result.StatusCode})")
             };
         }
 
@@ -140,7 +121,7 @@ public class Plugin
         catch (Exception ex)
         {
             _logger.LogError("Unable to parse data returned from upstream source: {exceptionType}: {exceptionMessage}", ex.GetType().Name, ex.Message);
-            throw new EvidenceSourcePermanentServerException(ERROR_UNABLE_TO_PARSE_RESPONSE, "Could not parse the data model returned from upstream source", ex);
+            throw new EvidenceSourcePermanentServerException(PluginConstants.ErrorUnableToParseResponse, "Could not parse the data model returned from upstream source", ex);
         }
     }
 }

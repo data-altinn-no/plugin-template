@@ -5,10 +5,12 @@ using Dan.Common;
 using Dan.Common.Enums;
 using Dan.Common.Interfaces;
 using Dan.Common.Models;
+using Dan.Plugin.DATASOURCENAME.Config;
 using Dan.Plugin.DATASOURCENAME.Models;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Newtonsoft.Json.Schema.Generation;
+using NJsonSchema;
 
 namespace Dan.Plugin.DATASOURCENAME;
 
@@ -18,56 +20,57 @@ namespace Dan.Plugin.DATASOURCENAME;
 public class Metadata : IEvidenceSourceMetadata
 {
     /// <summary>
-    /// 
+    ///
     /// </summary>
     /// <returns></returns>
     public List<EvidenceCode> GetEvidenceCodes()
     {
-        JSchemaGenerator generator = new JSchemaGenerator();
-
-        return new List<EvidenceCode>()
-        {
-            new()
+        return
+        [
+            new EvidenceCode
             {
-                EvidenceCodeName = global::Dan.Plugin.DATASOURCENAME.Plugin.SimpleDatasetName,
-                EvidenceSource = global::Dan.Plugin.DATASOURCENAME.Plugin.SourceName,
-                Values = new List<EvidenceValue>()
-                {
-                    new()
+                EvidenceCodeName = PluginConstants.SimpleDatasetName,
+                EvidenceSource = PluginConstants.SourceName,
+                Values =
+                [
+                    new EvidenceValue
                     {
                         EvidenceValueName = "field1",
                         ValueType = EvidenceValueType.String
                     },
-                    new()
+
+                    new EvidenceValue
                     {
                         EvidenceValueName = "field2",
                         ValueType = EvidenceValueType.String
                     }
-                }
+                ]
             },
-            new()
+            new EvidenceCode
             {
-                EvidenceCodeName = global::Dan.Plugin.DATASOURCENAME.Plugin.RichDatasetName,
-                EvidenceSource = global::Dan.Plugin.DATASOURCENAME.Plugin.SourceName,
-                Values = new List<EvidenceValue>()
-                {
-                    new()
+                EvidenceCodeName = PluginConstants.RichDatasetName,
+                EvidenceSource = PluginConstants.SourceName,
+                Values =
+                [
+                    new EvidenceValue
                     {
                         // Convention for rich datasets with a single JSON model is to use the value name "default"
                         EvidenceValueName = "default",
                         ValueType = EvidenceValueType.JsonSchema,
-                        JsonSchemaDefintion =  generator.Generate(typeof(ExampleModel)).ToString()
+                        JsonSchemaDefintion = JsonSchema
+                            .FromType<ExampleModel>()
+                            .ToJson(Newtonsoft.Json.Formatting.Indented)
                     }
-                },
-                AuthorizationRequirements = new List<Requirement>
-                {
+                ],
+                AuthorizationRequirements =
+                [
                     new MaskinportenScopeRequirement
                     {
-                        RequiredScopes = new List<string> { "altinn:dataaltinnno/somescope" }
+                        RequiredScopes = ["altinn:dataaltinnno/somescope"]
                     }
-                }
+                ]
             }
-        };
+        ];
     }
 
 
