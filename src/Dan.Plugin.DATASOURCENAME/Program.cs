@@ -1,11 +1,11 @@
-using Dan.Plugin.DATASOURCENAME;
 using Microsoft.Extensions.Hosting;
 using Dan.Common.Extensions;
+using Dan.Plugin.DATASOURCENAME.Config;
 using Microsoft.Extensions.DependencyInjection;
 
 var host = new HostBuilder()
     .ConfigureDanPluginDefaults()
-    .ConfigureAppConfiguration((context, configuration) =>
+    .ConfigureAppConfiguration((_, _) =>
     {
         // Add more configuration sources if necessary. ConfigureDanPluginDefaults will load environment variables, which includes
         // local.settings.json (if developing locally) and applications settings for the Azure Function

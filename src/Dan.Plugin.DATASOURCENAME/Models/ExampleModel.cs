@@ -1,7 +1,9 @@
+using System;
 using Newtonsoft.Json;
 
 namespace Dan.Plugin.DATASOURCENAME.Models;
 
+[Serializable]
 public class ExampleModel
 {
     [JsonRequired]
