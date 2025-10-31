@@ -8,6 +8,9 @@ on:
      - '**/*.yml'
  workflow_dispatch:
 
+permissions:
+  actions: read
+  contents: read
 jobs:
  run:
    uses: data-altinn-no/deploy-actions/.github/workflows/dan-deploy-flow.yml@main
