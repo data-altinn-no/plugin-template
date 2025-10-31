@@ -11,6 +11,9 @@ on:
 permissions:
   actions: read
   contents: read
+  checks: write
+  pull-requests: write
+  
 jobs:
  run:
    uses: data-altinn-no/deploy-actions/.github/workflows/dan-deploy-flow.yml@main
