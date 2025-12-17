@@ -6,11 +6,10 @@ using Dan.Common.Enums;
 using Dan.Common.Interfaces;
 using Dan.Common.Models;
 using Dan.Plugin.DATASOURCENAME.Config;
-using Dan.Plugin.DATASOURCENAME.Models;
+using Dan.Plugin.DATASOURCENAME.Models.Dtos;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Newtonsoft.Json.Schema.Generation;
-using NJsonSchema;
+using Newtonsoft.Json;
 
 namespace Dan.Plugin.DATASOURCENAME;
 
@@ -31,6 +30,7 @@ public class Metadata : IEvidenceSourceMetadata
             {
                 EvidenceCodeName = PluginConstants.SimpleDatasetName,
                 EvidenceSource = PluginConstants.SourceName,
+                BelongsToServiceContexts = ["ServiceContext"],
                 Values =
                 [
                     new EvidenceValue
@@ -50,6 +50,7 @@ public class Metadata : IEvidenceSourceMetadata
             {
                 EvidenceCodeName = PluginConstants.RichDatasetName,
                 EvidenceSource = PluginConstants.SourceName,
+                BelongsToServiceContexts = ["ServiceContext1", "ServiceContext2"],
                 Values =
                 [
                     new EvidenceValue
@@ -57,9 +58,7 @@ public class Metadata : IEvidenceSourceMetadata
                         // Convention for rich datasets with a single JSON model is to use the value name "default"
                         EvidenceValueName = "default",
                         ValueType = EvidenceValueType.JsonSchema,
-                        JsonSchemaDefintion = JsonSchema
-                            .FromType<ExampleModel>()
-                            .ToJson(Newtonsoft.Json.Formatting.Indented)
+                        JsonSchemaDefintion = EvidenceValue.SchemaFromObject<ExampleModel>(Formatting.Indented)
                     }
                 ],
                 AuthorizationRequirements =
