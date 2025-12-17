@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace Dan.Plugin.DATASOURCENAME.Models;
+namespace Dan.Plugin.DATASOURCENAME.Models.Dtos;
 
 [Serializable]
 public class ExampleModel
